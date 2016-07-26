@@ -406,6 +406,7 @@ public class Window extends JFrame {
 		String text = textsendField.getText();
 		os.print(text.toUpperCase()+"\r\n");
 		appendREC(SR, text);
+		textsendField.setText("");
 	}
 	
 	public void SendConfig() {
