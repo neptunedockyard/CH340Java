@@ -60,6 +60,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
 
 import javax.swing.JTabbedPane;
+import javax.swing.JLabel;
 
 public class Window extends JFrame {
 	private JPanel contentPane;
@@ -81,6 +82,7 @@ public class Window extends JFrame {
 	private JScrollPane scrollPane;
 	private JScrollPane scrollPaneEnc;
 	private static JTextArea textEncBox;
+	private JLabel charcountLabel;
 	
 	public static Enumeration comportList;
 	public static CommPortIdentifier comportID;
@@ -164,6 +166,16 @@ public class Window extends JFrame {
 		txtUsername = new JTextField();
 		txtUsername.setText("username");
 		txtUsername.setColumns(10);
+		txtUsername.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if(!txtUsername.getText().matches("[0-9a-zA-Z]{0,10}")){
+					txtUsername.setText(""+txtUsername.getText().substring(0, txtUsername.getText().length() - 1));
+					getToolkit().beep();
+					e.consume();
+				}
+			}
+		});
 		
 		pwdPassword = new JPasswordField();
 		pwdPassword.setText("password");
@@ -171,9 +183,8 @@ public class Window extends JFrame {
 		txtRxAddress = new JTextField();
 		txtRxAddress.addKeyListener(new KeyAdapter() {
 			@Override
-			public void keyTyped(KeyEvent e) {
-				if(!txtRxAddress.getText().matches("[0-9a-fA-F]{0,9}"))
-				{
+			public void keyReleased(KeyEvent e) {
+				if(!txtRxAddress.getText().matches("[0-9a-fA-F]{0,10}")){
 					txtRxAddress.setText(""+txtRxAddress.getText().substring(0, txtRxAddress.getText().length() - 1));
 					getToolkit().beep();
 					e.consume();
@@ -186,8 +197,15 @@ public class Window extends JFrame {
 		txtTxAddress = new JTextField();
 		txtTxAddress.addKeyListener(new KeyAdapter() {
 			@Override
-			public void keyTyped(KeyEvent e) {
-				if(txtTxAddress.getText().length() > 10) {
+//			public void keyTyped(KeyEvent e) {
+//				if(txtTxAddress.getText().length() > 10) {
+//					getToolkit().beep();
+//					e.consume();
+//				}
+//			}
+			public void keyReleased(KeyEvent e) {
+				if(!txtTxAddress.getText().matches("[0-9a-fA-F]{0,10}")){
+					txtTxAddress.setText(""+txtTxAddress.getText().substring(0, txtTxAddress.getText().length() - 1));
 					getToolkit().beep();
 					e.consume();
 				}
@@ -219,6 +237,10 @@ public class Window extends JFrame {
 					//JOptionPane.showMessageDialog(null, "Sending text");
 					SendText();
 			}
+			@Override
+			public void keyReleased(KeyEvent arg0){
+				charcountLabel.setText(Integer.toString(textsendField.getText().length()));
+			}
 		});
 		textsendField.setColumns(10);
 		
@@ -240,8 +262,7 @@ public class Window extends JFrame {
 		JCheckBox unicodeBool = new JCheckBox("Unicode");
 		unicodeBool.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent arg0) {
-				if(arg0.getStateChange() == ItemEvent.SELECTED)
-				{
+				if(arg0.getStateChange() == ItemEvent.SELECTED)	{
 					showUnicode = true;
 				} else {
 					showUnicode = false;
@@ -250,16 +271,20 @@ public class Window extends JFrame {
 		});
 		
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		
+		charcountLabel = new JLabel("0");
 		GroupLayout gl_contentPane = new GroupLayout(contentPane);
 		gl_contentPane.setHorizontalGroup(
 			gl_contentPane.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_contentPane.createSequentialGroup()
-					.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
-						.addGroup(Alignment.TRAILING, gl_contentPane.createSequentialGroup()
-							.addComponent(textsendField, GroupLayout.DEFAULT_SIZE, 359, Short.MAX_VALUE)
-							.addGap(18)
+					.addGroup(gl_contentPane.createParallelGroup(Alignment.TRAILING)
+						.addGroup(gl_contentPane.createSequentialGroup()
+							.addComponent(textsendField, GroupLayout.PREFERRED_SIZE, 332, GroupLayout.PREFERRED_SIZE)
+							.addPreferredGap(ComponentPlacement.RELATED)
+							.addComponent(charcountLabel)
+							.addPreferredGap(ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
 							.addComponent(btnSend))
-						.addGroup(Alignment.TRAILING, gl_contentPane.createSequentialGroup()
+						.addGroup(gl_contentPane.createSequentialGroup()
 							.addGroup(gl_contentPane.createParallelGroup(Alignment.TRAILING, false)
 								.addComponent(baudrateBox, Alignment.LEADING, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
 								.addComponent(comportBox, Alignment.LEADING, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -278,7 +303,7 @@ public class Window extends JFrame {
 							.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
 								.addGroup(gl_contentPane.createSequentialGroup()
 									.addComponent(chckbxBroadcast)
-									.addPreferredGap(ComponentPlacement.RELATED, 31, Short.MAX_VALUE)
+									.addPreferredGap(ComponentPlacement.RELATED, 21, Short.MAX_VALUE)
 									.addComponent(unicodeBool))
 								.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING, false)
 									.addComponent(bitrateBox, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -312,7 +337,8 @@ public class Window extends JFrame {
 					.addPreferredGap(ComponentPlacement.RELATED)
 					.addGroup(gl_contentPane.createParallelGroup(Alignment.BASELINE)
 						.addComponent(textsendField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-						.addComponent(btnSend)))
+						.addComponent(btnSend)
+						.addComponent(charcountLabel)))
 		);
 		
 		scrollPane = new JScrollPane();
@@ -437,8 +463,7 @@ public class Window extends JFrame {
 		PrintStream os = new PrintStream(outStream, true);
 		String message;
 		Boolean identifier = true;
-		while(full_msg.length()>0)
-		{
+		while(full_msg.length()>0){
 			if(full_msg.toUpperCase().contentEquals("AT?") || full_msg.toUpperCase().contains("AT+")){
 				message = full_msg.toUpperCase();
 				full_msg = "";
@@ -471,6 +496,7 @@ public class Window extends JFrame {
 			System.out.println(message);
 		}
 		textsendField.setText("");
+		charcountLabel.setText(Integer.toString(0));
 	}
 	
 	public void SendConfig() {
