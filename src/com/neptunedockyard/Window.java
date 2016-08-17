@@ -56,6 +56,10 @@ import javax.swing.text.Document;
 import javax.swing.JTextArea;
 
 import java.awt.Font;
+import java.awt.event.ItemListener;
+import java.awt.event.ItemEvent;
+
+import javax.swing.JTabbedPane;
 
 public class Window extends JFrame {
 	private JPanel contentPane;
@@ -75,6 +79,8 @@ public class Window extends JFrame {
 	private JCheckBox chckbxBroadcast;
 	private static JTextArea textrecBox;
 	private JScrollPane scrollPane;
+	private JScrollPane scrollPaneEnc;
+	private static JTextArea textEncBox;
 	
 	public static Enumeration comportList;
 	public static CommPortIdentifier comportID;
@@ -85,7 +91,6 @@ public class Window extends JFrame {
 	
 	public static Boolean connected = false;
 	public static Boolean showUnicode = false;
-
 
 	/**
 	 * Launch the application.
@@ -182,7 +187,7 @@ public class Window extends JFrame {
 		txtTxAddress.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyTyped(KeyEvent e) {
-				if(txtTxAddress.getText().length() >= 10) {
+				if(txtTxAddress.getText().length() > 10) {
 					getToolkit().beep();
 					e.consume();
 				}
@@ -232,19 +237,29 @@ public class Window extends JFrame {
 			}
 		});
 		
-		scrollPane = new JScrollPane();
+		JCheckBox unicodeBool = new JCheckBox("Unicode");
+		unicodeBool.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent arg0) {
+				if(arg0.getStateChange() == ItemEvent.SELECTED)
+				{
+					showUnicode = true;
+				} else {
+					showUnicode = false;
+				}
+			}
+		});
+		
+		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		GroupLayout gl_contentPane = new GroupLayout(contentPane);
 		gl_contentPane.setHorizontalGroup(
 			gl_contentPane.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_contentPane.createSequentialGroup()
 					.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
-						.addGroup(Alignment.TRAILING, gl_contentPane.createParallelGroup(Alignment.TRAILING)
-							.addGroup(gl_contentPane.createSequentialGroup()
-								.addComponent(textsendField, GroupLayout.DEFAULT_SIZE, 349, Short.MAX_VALUE)
-								.addGap(18)
-								.addComponent(btnSend))
-							.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 424, Short.MAX_VALUE))
-						.addGroup(gl_contentPane.createSequentialGroup()
+						.addGroup(Alignment.TRAILING, gl_contentPane.createSequentialGroup()
+							.addComponent(textsendField, GroupLayout.DEFAULT_SIZE, 359, Short.MAX_VALUE)
+							.addGap(18)
+							.addComponent(btnSend))
+						.addGroup(Alignment.TRAILING, gl_contentPane.createSequentialGroup()
 							.addGroup(gl_contentPane.createParallelGroup(Alignment.TRAILING, false)
 								.addComponent(baudrateBox, Alignment.LEADING, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
 								.addComponent(comportBox, Alignment.LEADING, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -261,10 +276,14 @@ public class Window extends JFrame {
 								.addComponent(btnSet))
 							.addPreferredGap(ComponentPlacement.RELATED)
 							.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
-								.addComponent(chckbxBroadcast)
+								.addGroup(gl_contentPane.createSequentialGroup()
+									.addComponent(chckbxBroadcast)
+									.addPreferredGap(ComponentPlacement.RELATED, 31, Short.MAX_VALUE)
+									.addComponent(unicodeBool))
 								.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING, false)
 									.addComponent(bitrateBox, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-									.addComponent(frequencyBox, GroupLayout.PREFERRED_SIZE, 86, GroupLayout.PREFERRED_SIZE)))))
+									.addComponent(frequencyBox, GroupLayout.PREFERRED_SIZE, 86, GroupLayout.PREFERRED_SIZE))))
+						.addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 424, Short.MAX_VALUE))
 					.addContainerGap())
 		);
 		gl_contentPane.setVerticalGroup(
@@ -274,7 +293,8 @@ public class Window extends JFrame {
 						.addComponent(btnConnect)
 						.addComponent(encryptBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 						.addComponent(btnSet)
-						.addComponent(chckbxBroadcast))
+						.addComponent(chckbxBroadcast)
+						.addComponent(unicodeBool))
 					.addPreferredGap(ComponentPlacement.RELATED)
 					.addGroup(gl_contentPane.createParallelGroup(Alignment.BASELINE)
 						.addComponent(comportBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
@@ -287,19 +307,31 @@ public class Window extends JFrame {
 						.addComponent(pwdPassword, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 						.addComponent(txtTxAddress, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 						.addComponent(frequencyBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-					.addGap(11)
-					.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 146, Short.MAX_VALUE)
+					.addPreferredGap(ComponentPlacement.RELATED)
+					.addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 151, Short.MAX_VALUE)
 					.addPreferredGap(ComponentPlacement.RELATED)
 					.addGroup(gl_contentPane.createParallelGroup(Alignment.BASELINE)
 						.addComponent(textsendField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 						.addComponent(btnSend)))
 		);
 		
+		scrollPane = new JScrollPane();
+		tabbedPane.addTab("Messages", null, scrollPane, null);
+		
 		textrecBox = new JTextArea();
-		if(showUnicode) textrecBox.setFont(new Font("Bitstream Cyberbit", Font.PLAIN, 15));
-		else textrecBox.setFont(new Font("Tahoma 11", Font.PLAIN, 13));
+		textrecBox.setWrapStyleWord(true);
+		textrecBox.setLineWrap(true);
 		textrecBox.setEditable(false);
 		scrollPane.setViewportView(textrecBox);
+		
+		scrollPaneEnc = new JScrollPane();
+		tabbedPane.addTab("Encrypted", null, scrollPaneEnc, null);
+		
+		textEncBox = new JTextArea();
+		textEncBox.setEditable(false);
+		scrollPaneEnc.setViewportView(textEncBox);
+		if(showUnicode) textrecBox.setFont(new Font("Bitstream Cyberbit", Font.PLAIN, 15));
+		else textrecBox.setFont(new Font("Tahoma 11", Font.PLAIN, 13));
 		contentPane.setLayout(gl_contentPane);
 	}
 	
@@ -401,11 +433,43 @@ public class Window extends JFrame {
 	}
 	
 	public void SendText() {
+		String full_msg = textsendField.getText();
 		PrintStream os = new PrintStream(outStream, true);
-		//System.out.println("AT?");
-		String text = textsendField.getText();
-		os.print(text.toUpperCase()+"\r\n");
-		appendREC(SR, text);
+		String message;
+		Boolean identifier = true;
+		while(full_msg.length()>0)
+		{
+			if(full_msg.toUpperCase().contentEquals("AT?") || full_msg.toUpperCase().contains("AT+")){
+				message = full_msg.toUpperCase();
+				full_msg = "";
+			} else {
+				if(!(txtUsername.getText().isEmpty()) && identifier){
+					full_msg = txtUsername.getText() + "> " + full_msg;
+					identifier = false;
+				}
+				if(full_msg.length() > 27){
+					message = full_msg.substring(0, 27);
+					full_msg = full_msg.substring(27, full_msg.length());
+				} else {
+					message = full_msg.substring(0, full_msg.length());
+					full_msg = "";
+				}
+			}
+			try {
+				Thread.sleep(150);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+//			System.out.println("Message size: "+message.length()+" Remaining message: "+full_msg);
+			if(full_msg.length() == 0){
+				os.print(message+"\r\n");
+			} else {
+				os.print(message+"\r");
+			}
+			appendREC(SR, message, full_msg.length());
+			System.out.println(message);
+		}
 		textsendField.setText("");
 	}
 	
@@ -430,17 +494,21 @@ public class Window extends JFrame {
 		String text = rate+freq+rxa+txa;
 
 		os.print(text);
-		appendREC(SR, text);
+		appendREC(SR, text, 0);
 	}
 	
-	public static void appendREC(SerialReader serialReader, final String text) {
+	public static void appendREC(SerialReader serialReader, final String text, final int continuous) {
 		SwingUtilities.invokeLater(new Runnable() {
 		
 			@Override
 			public void run() {
 				try {
 					Document doc = textrecBox.getDocument();
-					doc.insertString(doc.getLength(), text+"\r\n", null);
+					if(continuous == 0){
+						doc.insertString(doc.getLength(), text+"\r\n", null);
+					} else {
+						doc.insertString(doc.getLength(), text, null);
+					}
 				} catch (BadLocationException ex) {
 					ex.printStackTrace();
 				}
@@ -484,14 +552,14 @@ public class Window extends JFrame {
 							byte[] array = grossunicode.getBytes("UTF-8");
 							String s = new String(array, Charset.forName("UTF-16"));
 							//System.out.println(s);
-							if(showUnicode) appendREC(this, s);
+							if(showUnicode) appendREC(this, s, 0);
 						}
 					} else
 						buffer[len++] = (byte) data;
 				}
 				String text = new String(buffer,0,len);
 				//System.out.print(new String(buffer,0,len));
-				appendREC(this, text);
+				appendREC(this, text, 0);
 			}
 			catch ( IOException e )
 			{
