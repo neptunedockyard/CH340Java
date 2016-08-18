@@ -27,14 +27,16 @@ public class Transcode {
 		switch(encType){
 		case "AES": {
 			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+			cryptoFactory(username, password, encType);
 		} break;
 		case "DES": {
 			cipher = Cipher.getInstance("DES");
+			cryptoFactory(username, password, encType);
 		} break;
 		default: {
 		} break;
 		}
-		cryptoFactory(username, password, encType);
+		
 	}
 	
 	public void cryptoFactory(String user, String pass, String encType) throws NoSuchAlgorithmException, InvalidKeySpecException{

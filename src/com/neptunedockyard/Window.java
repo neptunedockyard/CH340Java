@@ -500,7 +500,9 @@ public class Window extends JFrame {
 		String message;
 		Boolean fullmsg_identifier = true;							//this is used for breaking up a long message with the username in front of it
 		while(full_msg.length()>0){
-			full_msg = transcoder.AESEncode(full_msg);
+			if(encryptBox.getSelectedItem().toString() != "None"){
+				full_msg = transcoder.AESEncode(full_msg);
+			}
 			if(full_msg.toUpperCase().contentEquals("AT?") || full_msg.toUpperCase().contains("AT+")){
 				message = full_msg.toUpperCase();
 				full_msg = "";
