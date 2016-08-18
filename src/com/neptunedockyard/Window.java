@@ -35,6 +35,10 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Enumeration;
 import java.util.TooManyListenersException;
 
@@ -45,6 +49,9 @@ import javax.comm.SerialPort;
 import javax.comm.SerialPortEvent;
 import javax.comm.SerialPortEventListener;
 import javax.comm.UnsupportedCommOperationException;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -93,6 +100,8 @@ public class Window extends JFrame {
 	
 	public static Boolean connected = false;
 	public static Boolean showUnicode = false;
+	
+	private static Transcode transcoder;
 
 	/**
 	 * Launch the application.
@@ -140,7 +149,13 @@ public class Window extends JFrame {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
 				//JOptionPane.showMessageDialog(null, "Connecting");
-				commConnect();
+				try {
+					commConnect();
+				} catch (NoSuchAlgorithmException | NoSuchPaddingException
+						| InvalidKeySpecException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		});
 		
@@ -168,9 +183,9 @@ public class Window extends JFrame {
 		txtUsername.setColumns(10);
 		txtUsername.addKeyListener(new KeyAdapter() {
 			@Override
-			public void keyReleased(KeyEvent e) {
-				if(!txtUsername.getText().matches("[0-9a-zA-Z]{0,10}")){
-					txtUsername.setText(""+txtUsername.getText().substring(0, txtUsername.getText().length() - 1));
+			public void keyTyped(KeyEvent e) {
+				if(!txtUsername.getText().matches("[0-9a-zA-Z]{0,9}")){
+//					txtUsername.setText(""+txtUsername.getText().substring(0, txtUsername.getText().length() - 1));
 					getToolkit().beep();
 					e.consume();
 				}
@@ -178,14 +193,24 @@ public class Window extends JFrame {
 		});
 		
 		pwdPassword = new JPasswordField();
+		pwdPassword.setColumns(8);
 		pwdPassword.setText("password");
+		pwdPassword.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyTyped(KeyEvent e) {
+				if(pwdPassword.getPassword().length >= 8){
+					getToolkit().beep();
+					e.consume();
+				}
+			}
+		});
 		
 		txtRxAddress = new JTextField();
 		txtRxAddress.addKeyListener(new KeyAdapter() {
 			@Override
-			public void keyReleased(KeyEvent e) {
-				if(!txtRxAddress.getText().matches("[0-9a-fA-F]{0,10}")){
-					txtRxAddress.setText(""+txtRxAddress.getText().substring(0, txtRxAddress.getText().length() - 1));
+			public void keyTyped(KeyEvent e) {
+				if(!txtRxAddress.getText().matches("[0-9a-fA-F]{0,9}")){
+//					txtRxAddress.setText(""+txtRxAddress.getText().substring(0, txtRxAddress.getText().length() - 1));
 					getToolkit().beep();
 					e.consume();
 				}
@@ -197,15 +222,9 @@ public class Window extends JFrame {
 		txtTxAddress = new JTextField();
 		txtTxAddress.addKeyListener(new KeyAdapter() {
 			@Override
-//			public void keyTyped(KeyEvent e) {
-//				if(txtTxAddress.getText().length() > 10) {
-//					getToolkit().beep();
-//					e.consume();
-//				}
-//			}
-			public void keyReleased(KeyEvent e) {
-				if(!txtTxAddress.getText().matches("[0-9a-fA-F]{0,10}")){
-					txtTxAddress.setText(""+txtTxAddress.getText().substring(0, txtTxAddress.getText().length() - 1));
+			public void keyTyped(KeyEvent e) {
+				if(!txtTxAddress.getText().matches("[0-9a-fA-F]{0,9}")){
+//					txtTxAddress.setText(""+txtTxAddress.getText().substring(0, txtTxAddress.getText().length() - 1));
 					getToolkit().beep();
 					e.consume();
 				}
@@ -234,8 +253,15 @@ public class Window extends JFrame {
 			@Override
 			public void keyPressed(KeyEvent arg0) {
 				if(arg0.getKeyCode() == KeyEvent.VK_ENTER)
-					//JOptionPane.showMessageDialog(null, "Sending text");
-					SendText();
+					try {
+						SendText();
+					} catch (InvalidKeyException | NoSuchAlgorithmException
+							| NoSuchPaddingException
+							| IllegalBlockSizeException | BadPaddingException
+							| InvalidAlgorithmParameterException | IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 			}
 			@Override
 			public void keyReleased(KeyEvent arg0){
@@ -249,7 +275,15 @@ public class Window extends JFrame {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				//JOptionPane.showMessageDialog(null, "Sending text");
-				SendText();
+				try {
+					SendText();
+				} catch (InvalidKeyException | NoSuchAlgorithmException
+						| NoSuchPaddingException
+						| IllegalBlockSizeException | BadPaddingException
+						| InvalidAlgorithmParameterException | IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 		});
 		
@@ -373,10 +407,12 @@ public class Window extends JFrame {
 		}
 	}
 	
-	public void commConnect()
+	public void commConnect() throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeySpecException
 	{
 		if(!connected) {
 			try {
+				System.out.println("why password not working?: " + pwdPassword.getPassword().toString());
+				transcoder = new Transcode(encryptBox.getSelectedItem().toString(), txtUsername.getText(), pwdPassword.getPassword().toString());
 				comportID = CommPortIdentifier.getPortIdentifier(comportBox.getSelectedItem().toString());
 				serial_tty = (SerialPort)comportID.open("wJTerm", 5000);
 				if(baudrateBox.getSelectedIndex() != -1 && baudrateBox.getSelectedIndex() != 0)
@@ -458,19 +494,20 @@ public class Window extends JFrame {
 		}
 	}
 	
-	public void SendText() {
+	public void SendText() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, IOException, BadPaddingException, InvalidAlgorithmParameterException {
 		String full_msg = textsendField.getText();
 		PrintStream os = new PrintStream(outStream, true);
 		String message;
-		Boolean identifier = true;
+		Boolean fullmsg_identifier = true;							//this is used for breaking up a long message with the username in front of it
 		while(full_msg.length()>0){
+			full_msg = transcoder.AESEncode(full_msg);
 			if(full_msg.toUpperCase().contentEquals("AT?") || full_msg.toUpperCase().contains("AT+")){
 				message = full_msg.toUpperCase();
 				full_msg = "";
 			} else {
-				if(!(txtUsername.getText().isEmpty()) && identifier){
+				if(!(txtUsername.getText().isEmpty()) && fullmsg_identifier){
 					full_msg = txtUsername.getText() + "> " + full_msg;
-					identifier = false;
+					fullmsg_identifier = false;
 				}
 				if(full_msg.length() > 27){
 					message = full_msg.substring(0, 27);
