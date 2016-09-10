@@ -102,6 +102,8 @@ public class Window extends JFrame {
 	public static Boolean showUnicode = false;
 	
 	private static Transcode transcoder;
+	private static String broadcast_msg = "BROADCAST: ALERT";
+	private static int broadcast_time = 60;
 
 	/**
 	 * Launch the application.
